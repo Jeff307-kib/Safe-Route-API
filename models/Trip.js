@@ -1,4 +1,4 @@
-import pool from "../config/dbConfig.js";
+import pool from "../config/db-config.js";
 
 class Trip {
   static async create(tripData) {
@@ -7,9 +7,8 @@ class Trip {
       destinationLocation: { latitude: destLat, longitude: destLng },
       durationMinutes,
       currentStatus,
+      maxExtensionMinutes,
     } = tripData;
-
-    let maxExtensionMinutes = 10 // will be replace with function later
 
     const query = `
       INSERT INTO trips (start_location, destination_location, duration_minutes, current_status, max_extension_minutes)
