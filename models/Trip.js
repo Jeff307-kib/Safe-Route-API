@@ -33,6 +33,26 @@ class Trip {
     const result = await pool.query(query, values);
     return result.rows[0];
   }
+
+  static async findById(id) { 
+    const query = `
+      SELECT 
+        trip_id,
+        ST_X(start_location::geometry) AS start_lng,
+        ST_Y(start_location::geometry) AS start_lat,
+        ST_X(destination_location::geometry) AS dest_lng,
+        ST_Y(destination_location::geometry) AS dest_lat,
+        duration_minutes,
+        actual_arrival_time,
+        current_status,
+        total_extended_minutes,
+        created_at
+      FROM trips WHERE trip_id = $1
+    `;
+
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
 }
 
 export default Trip;
