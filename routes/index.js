@@ -1,5 +1,5 @@
 import express from "express";
-import tripRoutes from './tripRoutes.js';
+import tripRoutes from './trip-routes.js';
 
 const router = express.Router();
 

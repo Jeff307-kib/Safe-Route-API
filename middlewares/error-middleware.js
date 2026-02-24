@@ -5,7 +5,7 @@ export default function (err, req, res, next) {
     const errorMessage = err.message || "Internal Server Error";
 
     res.status(statusCode).json({
-        status: "Failed",
+        success: false,
         message: errorMessage
     });
 }

@@ -1,6 +1,6 @@
 import express from 'express';
 import routes from './routes/index.js';
-import GlobalErrorHandler from './middlewares/error.middleware.js';
+import GlobalErrorHandler from './middlewares/error-middleware.js';
 const app = express();
 
 // Body parser middleware
