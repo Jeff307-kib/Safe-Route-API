@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 
 export const tripValidators = {
     create: [
@@ -27,7 +27,13 @@ export const tripValidators = {
         //     .withMessage('Status is required')
         //     .isIn(['Active', 'Emergency', 'Completed', 'Cancelled', 'Snoozed'])
         //     .withMessage('Invalid status type'),
-    ]
+    ],
+
+    getById: [
+        param('id')
+            .isInt({min: 1})
+            .withMessage('Invalid trip id')
+    ],
 }
 
 export default tripValidators;

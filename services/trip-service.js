@@ -5,8 +5,18 @@ export class TripService {
     async createTrip(tripData) {
         const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
         const currentStatus = 'Active'; // Trip status would only be Active when first created
-        const location = await Trip.create({...tripData, currentStatus, maxExtensionMinutes});
-        return location;
+        const trip = await Trip.create({...tripData, currentStatus, maxExtensionMinutes});
+        return trip;
+    }
+
+    async getTripById(id) {
+        const trip = await Trip.findById(id);
+
+        if (!trip) {
+            return new AppError('Trip not found', 404);
+        }
+
+        return trip;
     }
 
     calculateMaxExtensionMinutes(durationMinutes) {

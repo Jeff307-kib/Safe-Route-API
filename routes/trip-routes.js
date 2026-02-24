@@ -11,5 +11,6 @@ const router = express.Router();
 // .get(getTrips);
 
 router.post('/', tripValidators.create, validate, tripController.create);
+router.get('/:id', tripValidators.getById, validate, tripController.getById);
 
 export default router;
