@@ -20,7 +20,7 @@ export const tripValidators = {
 
         body('durationMinutes')
             .isInt({ min: 5 })
-            .withMessage('Duration must be at least 5 minutes'),
+        .withMessage('Duration must be at least 5 minutes'),
 
         // body('currentStatus')
         //     .notEmpty()
