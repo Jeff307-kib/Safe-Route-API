@@ -13,6 +13,14 @@ export class TripController {
         const trip = await tripService.getTripById(id);
         ApiResponse.success(res, trip, 'Trip retrieved successfully');
     });
+
+    getAllTrips = catchAsync(async (req, res, next) => {
+        const { status, page, limit, sortBy } = req.query;
+        const trips = await tripService.getAllTrips(status, page, limit, sortBy);
+        const count = trips.length
+
+        ApiResponse.success(res, { total: count, trips }, 'Trips retrieved successfully');
+    })
 }
 
 export default new TripController();

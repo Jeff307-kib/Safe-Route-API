@@ -19,6 +19,12 @@ export class TripService {
         return trip;
     }
 
+    async getAllTrips(status = 'Completed', page = 1, limit = 10, sortBy = 'created_at') {
+        const offset = (page - 1) * limit;
+        const trips = await Trip.findAll({status, limit, sortBy, offset});
+        return trips;
+    }
+
     calculateMaxExtensionMinutes(durationMinutes) {
         const duration = Number(durationMinutes);
 
