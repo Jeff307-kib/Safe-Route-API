@@ -10,7 +10,8 @@ const router = express.Router();
 // .route('/')
 // .get(getTrips);
 
-router.post('/', tripValidators.create, validate, tripController.create);
+router.get('/', tripValidators.getAll, validate, tripController.getAllTrips);
 router.get('/:id', tripValidators.getById, validate, tripController.getById);
+router.post('/', tripValidators.create, validate, tripController.create);
 
 export default router;
