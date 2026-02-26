@@ -13,5 +13,6 @@ const router = express.Router();
 router.get('/', tripValidators.getAll, validate, tripController.getAllTrips);
 router.get('/:id', tripValidators.getById, validate, tripController.getById);
 router.post('/', tripValidators.create, validate, tripController.create);
+router.patch('/:id', tripValidators.getById, validate, tripController.markCompleteTrip);
 
 export default router;
