@@ -46,7 +46,8 @@ class Trip {
         actual_arrival_time,
         current_status,
         total_extended_minutes,
-        created_at
+        created_at,
+        updated_at
       FROM trips WHERE trip_id = $1
     `;
 
@@ -81,6 +82,34 @@ class Trip {
     ];
     const result = await pool.query(query, values);
     return result.rows;
+  }
+
+  static async complete(id) {
+    const query = `
+      UPDATE trips 
+      SET current_status = $1, actual_arrival_time = NOW(), updated_at = NOW() 
+      WHERE trip_id = $2 AND current_status IN ('Active', 'Snoozed', 'Emergency')
+      RETURNING 
+        trip_id,
+        ST_X(start_location::geometry) AS start_lng,
+        ST_Y(start_location::geometry) AS start_lat,
+        ST_X(destination_location::geometry) AS dest_lng,
+        ST_Y(destination_location::geometry) AS dest_lat,
+        duration_minutes,
+        actual_arrival_time,
+        current_status,
+        total_extended_minutes,
+        created_at,
+        updated_at
+    `;
+    const values = ['Completed', id];
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    return result.rows[0];
   }
 }
 
