@@ -1,5 +1,6 @@
 import express from "express";
 import tripRoutes from './trip-routes.js';
+import userRoutes from './user-routes.js';
 
 const router = express.Router();
 
@@ -13,6 +14,8 @@ router.get('/health', (req, res) => {
 });
 
 // API routes
+router.use('/users', userRoutes);
 router.use('/trips', tripRoutes);
+
 
 export default router;
