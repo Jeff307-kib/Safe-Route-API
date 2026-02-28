@@ -1,7 +1,10 @@
 import express from 'express';
 import routes from './routes/index.js';
+import cors from 'cors';
 import GlobalErrorHandler from './middlewares/error-middleware.js';
 const app = express();
+
+app.use(cors());
 
 // Body parser middleware
 app.use(express.json());
@@ -20,5 +23,6 @@ app.use((req, res) => {
 });
 
 app.use(GlobalErrorHandler);
+
 
 export default app;
