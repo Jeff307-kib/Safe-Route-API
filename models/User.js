@@ -55,7 +55,7 @@ class User {
 
   static async findByPhoneNumber(phoneNumber) {
     const query = `
-      SELECT * FROM users WHERE phone_number = $1;
+      SELECT user_id, full_name, email, phone_number, password_hash FROM users WHERE phone_number = $1;
     `;
 
     const result = await pool.query(query, [phoneNumber]);

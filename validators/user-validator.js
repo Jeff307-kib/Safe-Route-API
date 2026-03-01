@@ -29,6 +29,17 @@ export const userValidators = {
             .withMessage('Password must be at least 8 characters long')
     ],
 
+    login: [
+        body('phoneNumber')
+            .trim()
+            .notEmpty()
+            .withMessage('Phone number is required'),
+        body('password')
+            .trim()
+            .notEmpty()
+            .withMessage('Password is required')
+    ],
+
     getById: [
         param('id')
             .isInt({ min: 1 })

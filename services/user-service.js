@@ -1,9 +1,11 @@
 import User from "../models/User.js";
 import AppError from '../utils/app-error.js';
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import dotenv from 'dotenv';
 
 class UserService {
-    async createUser(userData) {
+    async register(userData) {
         const { password, ...otherData } = userData
 
         // The "12" is the cost factor. Higher = more secure but slower.
@@ -16,7 +18,25 @@ class UserService {
             password: hashedPassword
         };
 
-        return await User.create(userToSave);
+        const newUser = await User.create(userToSave);
+
+        const token = signToken(newUser.user_id);
+        return { user: newUser, token };
+    }
+
+    async login({phoneNumber, password}) {
+        const user = await User.findByPhoneNumber(phoneNumber);
+
+        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+            throw new AppError('Invalid phone number or password', 401);
+        }
+
+        const token = signToken(user.user_id);
+
+        // Clean up sensitive data before returning
+        delete user.password_hash;
+
+        return { user, token };
     }
 
     async getUserById(id) {
@@ -51,5 +71,11 @@ class UserService {
         return deletedUser;
     }
 }
+
+const signToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN
+    });
+};
 
 export default new UserService();
