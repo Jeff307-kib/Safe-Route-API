@@ -9,6 +9,11 @@ app.use(cors());
 // Body parser middleware
 app.use(express.json());
 
+app.use((req, res, next) => {
+    console.log(`Inbound Request: ${req.method} ${req.originalUrl}`);
+    next();
+});
+
 // API routes
 app.use('/api/v1', routes);
 
@@ -22,10 +27,7 @@ app.use((req, res) => {
     });
 });
 
-app.use((req, res, next) => {
-    console.log(`Inbound Request: ${req.method} ${req.originalUrl}`);
-    next();
-});
+
 
 app.use(GlobalErrorHandler);
 
