@@ -63,7 +63,6 @@ class User {
   }
 
   static async updateUser(id, updateData) {
-
     const allowedFields = [
       "full_name",
       "email",

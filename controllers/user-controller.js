@@ -17,12 +17,10 @@ export class UserController {
 
         ApiResponse.success(res, {user, token}, 'Login successful.')
     })
-    
-    getById = catchAsync(async (req, res, next) => {
-        const { id } = req.params;
-        const user = await userService.getUserById(id);
-        ApiResponse.success(res, user, 'User retrieved successfully');
-    });
+
+    getMe = catchAsync(async (req, res, next) => {
+        ApiResponse.success(res, { user: req.user}, 'User profile retrieved');
+    })
 
     getAllUsers = catchAsync(async (req, res, next) => {
         const { page, limit } = req.query;
@@ -33,9 +31,8 @@ export class UserController {
     });
 
     update = catchAsync(async (req, res, next) => {
-        const { id } = req.params;
-        const user = await userService.updateUser(id, req.body);
-        ApiResponse.success(res, user, 'User updated successfully');
+        const updatedUser = await userService.updateUser(req.user.user_id, req.body);
+        ApiResponse.success(res, {user: updatedUser}, 'User updated successfully');
     });
 
     delete = catchAsync(async (req, res, next) => {
