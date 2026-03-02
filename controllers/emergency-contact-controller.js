@@ -4,14 +4,13 @@ import ApiResponse from "../utils/api-response.js";
 
 export class EmergencyContactController {
     create = catchAsync(async (req, res) => {
-        console.log("Request Body:", req.body); //debugging
-
+        
         const contact = await contactService.addContact(req.body);
-        ApiResponse.created(res, contact, 'Emergency contact added');
+        ApiResponse.created(res, contact, 'Emergency contact linked successfully');
     });
 
     getAll = catchAsync(async (req, res) => {
-        const contacts = await contactService.getContactsByUserId(req.params.userId);
+        const contacts = await contactService.getContacts(req.params.userId);
         ApiResponse.success(res, contacts);
     });
 }
