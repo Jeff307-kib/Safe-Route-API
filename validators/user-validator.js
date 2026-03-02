@@ -65,11 +65,7 @@ export const userValidators = {
             .withMessage('Invalid sort field'),
     ],
 
-    update: [
-        param('id')
-            .isInt({ min: 1 })
-            .withMessage('Invalid user id'),
-        
+    update: [       
         body('fullName')
             .optional()
             .trim()
