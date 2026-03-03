@@ -35,9 +35,12 @@ class User {
 
   static async findById(id) {
     const query = `
-      SELECT user_id, full_name, email, phone_number, created_at, updated_at
-      FROM users 
-      WHERE user_id = $1;
+      SELECT 
+        u.user_id, u.full_name, u.email, u.phone_number,
+        pd.date_of_birth, pd.blood_type, pd.medical_note
+      FROM users u
+      LEFT JOIN profile_details pd ON u.user_id = pd.user_id
+      WHERE u.user_id = $1
     `;
 
     const result = await pool.query(query, [id]);

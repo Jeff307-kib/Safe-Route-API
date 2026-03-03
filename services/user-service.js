@@ -1,8 +1,9 @@
 import User from "../models/User.js";
+import ProfileDetails from '../models/Profile-Details.js';
 import AppError from '../utils/app-error.js';
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import dotenv from 'dotenv';
+
 
 class UserService {
     async register(userData) {
@@ -24,7 +25,7 @@ class UserService {
         return { user: newUser, token };
     }
 
-    async login({phoneNumber, password}) {
+    async login({ phoneNumber, password }) {
         const user = await User.findByPhoneNumber(phoneNumber);
 
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
@@ -60,6 +61,14 @@ class UserService {
         }
         const updatedUser = await User.updateUser(id, updateData);
         return updatedUser;
+    }
+
+    async updateProfileDetails(userId, details) {
+        if (details?.date_of_birth && new Date(details.date_of_birth) > new Date()) {
+            throw new AppError('Date of birth cannot be in the future', 400);
+        }
+
+        return await ProfileDetails.upsert(userId, details);
     }
 
     async deleteUser(id) {

@@ -21,11 +21,18 @@ router
         userController.login
     );
 router
+    .patch(
+        '/me/details',
+        protect,
+        userController.updateDetails
+    );
+router
     .get(
         '/me',
         protect,
         userController.getMe
     );
+
 router
     .get(
         '/',
@@ -42,6 +49,14 @@ router
         validate,
         userController.update
     );
+router
+    .patch(
+        '/me/details',
+        protect,
+        userValidators.updateDetails,
+        validate,
+        userController.updateDetails
+    )
 router
     .delete(
         '/:id',
