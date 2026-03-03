@@ -43,6 +43,14 @@ router
         userController.update
     );
 router
+    .patch(
+        '/me/details',
+        protect,
+        userValidators.updateDetails,
+        validate,
+        userController.updateDetails
+    )
+router
     .delete(
         '/:id',
         userValidators.getById,

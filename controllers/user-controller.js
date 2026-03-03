@@ -35,6 +35,11 @@ export class UserController {
         ApiResponse.success(res, {user: updatedUser}, 'User updated successfully');
     });
 
+    updateDetails = catchAsync(async (req, res, next) => {
+        const details = await userService.updateProfileDetails(req.user.user_id, req.body);
+        ApiResponse.success(res, details, 'Profile details updated successfully');
+    })
+
     delete = catchAsync(async (req, res, next) => {
         const { id } = req.params;
         await userService.deleteUser(id);
