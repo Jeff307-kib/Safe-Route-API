@@ -3,11 +3,24 @@ import catchAsync from '../utils/catch-async.js';
 import ApiResponse from "../utils/api-response.js";
 
 export class UserController {
-    register = catchAsync(async (req, res) => {
+    register = catchAsync(async (req, res, next) => {
         const {user, token} = await userService.register(req.body);
-
+        const newUser = {
+            user,
+            token
+        };
         ApiResponse.created(res, {user, token}, 'Register successful');
     });
+
+    login = catchAsync(async (req, res, next) => {
+        const {user, token} = await userService.login(req.body);
+
+        ApiResponse.success(res, {user, token}, 'Login successful.')
+    })
+
+    getMe = catchAsync(async (req, res, next) => {
+        ApiResponse.success(res, { user: req.user}, 'User profile retrieved');
+    })
 
     login = catchAsync(async (req, res) => {
         const {user, token} = await userService.login(req.body);

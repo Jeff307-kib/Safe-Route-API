@@ -29,6 +29,17 @@ export const userValidators = {
             .withMessage('Password must be at least 8 characters long')
     ],
 
+    login: [
+        body('phoneNumber')
+            .trim()
+            .notEmpty()
+            .withMessage('Phone number is required'),
+        body('password')
+            .trim()
+            .notEmpty()
+            .withMessage('Password is required')
+    ],
+
     getById: [
         param('id')
             .isInt({ min: 1 })
@@ -46,14 +57,15 @@ export const userValidators = {
             .optional()
             .isInt({ min: 1, max: 100 })
             .withMessage('Limit must be between 1 and 100')
-            .toInt()
+            .toInt(),
+
+        query('sortBy')
+            .optional()
+            .isIn(['created_at', 'duration_minutes', 'trip_id'])
+            .withMessage('Invalid sort field'),
     ],
 
-    update: [
-        param('id')
-            .isInt({ min: 1 })
-            .withMessage('Invalid user id'),
-        
+    update: [       
         body('fullName')
             .optional()
             .trim()
