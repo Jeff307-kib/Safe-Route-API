@@ -8,14 +8,15 @@ class Trip {
       durationMinutes,
       currentStatus,
       maxExtensionMinutes,
+      user_id
     } = tripData;
 
     const query = `
-      INSERT INTO trips (start_location, destination_location, duration_minutes, current_status, max_extension_minutes)
+      INSERT INTO trips (start_location, destination_location, duration_minutes, current_status, max_extension_minutes, user_id)
       VALUES (
         ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
         ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography,
-        $5, $6, $7
+        $5, $6, $7, $8
       )
       RETURNING *;
     `;
@@ -27,7 +28,8 @@ class Trip {
       destLat,
       durationMinutes,
       currentStatus,
-      maxExtensionMinutes
+      maxExtensionMinutes,
+      user_id
     ];
 
     const result = await pool.query(query, values);
@@ -47,7 +49,8 @@ class Trip {
         current_status,
         total_extended_minutes,
         created_at,
-        updated_at
+        updated_at,
+        user_id
       FROM trips WHERE trip_id = $1
     `;
 
@@ -68,7 +71,8 @@ class Trip {
         actual_arrival_time,
         current_status,
         total_extended_minutes,
-        created_at
+        created_at,
+        user_id
       FROM trips 
       WHERE current_status = $1
       ORDER BY ${sortBy ? sortBy : 'created_at'} DESC
@@ -100,7 +104,8 @@ class Trip {
         current_status,
         total_extended_minutes,
         created_at,
-        updated_at
+        updated_at,
+        user_id
     `;
     const values = ['Completed', id];
     const result = await pool.query(query, values);
@@ -110,6 +115,28 @@ class Trip {
     }
 
     return result.rows[0];
+  }
+
+  static async findByUserId(userId) {
+    const sql = `
+      SELECT 
+        trip_id,
+        ST_X(start_location::geometry) AS start_lng,
+        ST_Y(start_location::geometry) AS start_lat,
+        ST_X(destination_location::geometry) AS dest_lng,
+        ST_Y(destination_location::geometry) AS dest_lat,
+        duration_minutes,
+        actual_arrival_time,
+        current_status,
+        total_extended_minutes,
+        created_at,
+        updated_at,
+        user_id
+      FROM trips WHERE user_id = $1
+    `;
+
+    const result = await pool.query(sql, [userId]);
+    return result.rows;
   }
 }
 
