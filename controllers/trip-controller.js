@@ -4,7 +4,14 @@ import ApiResponse from "../utils/api-response.js";
 
 export class TripController {
     create = catchAsync(async (req, res) => {
-        const trip = await tripService.createTrip(req.body);
+        const userId = req.user.user_id;
+
+        const tripData = {
+            ...req.body,
+            user_id: userId
+        }
+
+        const trip = await tripService.createTrip(tripData);
         ApiResponse.created(res, trip, 'Trip created successfully');
     });
 
@@ -21,6 +28,13 @@ export class TripController {
 
         ApiResponse.success(res, { total: count, trips }, 'Trips retrieved successfully');
     });
+
+    getMyTrips = catchAsync(async (req, res) => {
+        const userId = req.user.user_id;
+
+        const trips = await tripService.getUserTrips(userId);
+        ApiResponse.success(res, trips, 'Trips retrieved successful');
+    })
 
     markCompleteTrip = catchAsync(async (req, res) => {
         const { id } = req.params;
