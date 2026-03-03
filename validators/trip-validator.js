@@ -55,7 +55,7 @@ export const tripValidators = {
 
         query('sortBy')
             .optional()
-            .isIn(['created_at', 'duration_minutes', 'trip_id'])
+            .isIn(['created_at', 'full_name', 'email', 'phone_number'])
             .withMessage('Invalid sort field'),
     ]
 }
