@@ -21,11 +21,18 @@ router
         userController.login
     );
 router
+    .patch(
+        '/me/details',
+        protect,
+        userController.updateDetails
+    );
+router
     .get(
         '/me',
         protect,
         userController.getMe
     );
+
 router
     .get(
         '/',
