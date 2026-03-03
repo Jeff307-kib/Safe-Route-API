@@ -1,21 +1,25 @@
 import EmergencyContact from "../models/EmergencyContact.js";
-import AppError from "../utils/app-error.js";
+import User from "../models/User.js";
 
 class EmergencyContactService {
-    async addContact(data) {
-        
-        if (!data || Object.keys(data).length === 0) {
-            throw new AppError("No contact data provided", 400);
+    async createContact(data) {
+        const { userId, contactUserId, relationship } = data;
+
+        // Fetch User B (e.g., John Watson ID: 12)
+        const targetUser = await User.findById(contactUserId);
+
+        if (!targetUser) {
+            throw new Error("Target user not found");
         }
 
-        const { userId, emergencyContactId, relationship, notes } = data;
-
-        // Validation for  specific schema fields
-        if (!userId || !emergencyContactId || !relationship) {
-            throw new AppError("userId, emergencyContactId, and relationship are required", 400);
-        }
-
-        return await EmergencyContact.create({ userId, emergencyContactId, relationship, notes });
+        // Inside a method, return is legal
+        return await EmergencyContact.create({
+            userId: userId,                // Owner (e.g., Moriarty ID: 5)
+            name: targetUser.full_name,     // Mapping from 'users' table
+            phone: targetUser.phone_number, // Mapping from 'users' table
+            email: targetUser.email,
+            relationship: relationship
+        });
     }
 }
 
