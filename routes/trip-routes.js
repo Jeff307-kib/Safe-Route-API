@@ -3,6 +3,7 @@ import express from 'express';
 import tripController from '../controllers/trip-controller.js';
 import tripValidators from '../validators/trip-validator.js';
 import validate from '../middlewares/validate-middleware.js';
+import { protect } from '../middlewares/auth-middleware.js';
 
 const router = express.Router();
 
@@ -10,9 +11,39 @@ const router = express.Router();
 // .route('/')
 // .get(getTrips);
 
-router.get('/', tripValidators.getAll, validate, tripController.getAllTrips);
-router.get('/:id', tripValidators.getById, validate, tripController.getById);
-router.post('/', tripValidators.create, validate, tripController.create);
-router.patch('/:id', tripValidators.getById, validate, tripController.markCompleteTrip);
+router.get(
+    '/', 
+    tripValidators.getAll, 
+    validate, 
+    tripController.getAllTrips
+);
+
+router.get(
+    '/my-trips', 
+    protect, 
+    tripController.getMyTrips
+);
+
+router.get(
+    '/:id', 
+    tripValidators.getById, 
+    validate, 
+    tripController.getById
+);
+
+router.post(
+    '/', 
+    protect, 
+    tripValidators.create, 
+    validate, 
+    tripController.create
+);
+
+router.patch(
+    '/:id', 
+    tripValidators.getById, 
+    validate, 
+    tripController.markCompleteTrip
+);
 
 export default router;

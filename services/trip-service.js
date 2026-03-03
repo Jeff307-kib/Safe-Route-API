@@ -25,6 +25,16 @@ export class TripService {
         return trips;
     }
 
+    async getUserTrips(userId) {
+        const trips = await Trip.findByUserId(userId);
+
+        if(!trips || trips.length === 0) {
+            return [];
+        }
+
+        return trips;
+    }
+
     async markCompleteTrip(id) {
         const existingTrip = await Trip.findById(id);
 
