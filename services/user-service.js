@@ -3,8 +3,7 @@ import ProfileDetails from '../models/Profile-Details.js';
 import AppError from '../utils/app-error.js';
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import ProfileDetails from '../models/Profile-Details.js';
-import dotenv from 'dotenv';
+
 
 class UserService {
     async register(userData) {
