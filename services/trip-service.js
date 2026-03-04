@@ -1,11 +1,27 @@
 import Trip from "../models/Trip.js";
 import AppError from '../utils/app-error.js';
+import pool from "../config/db-config.js";
+import ContactHelper from "../utils/contact-helper.js";
 
 export class TripService {
     async createTrip(tripData) {
+
+        const { selectedContactIds, ...restTripData } = tripData;
+        
         const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
         const currentStatus = 'Active'; // Trip status would only be Active when first created
-        const trip = await Trip.create({ ...tripData, currentStatus, maxExtensionMinutes });
+        const trip = await Trip.create({ ...restTripData, currentStatus, maxExtensionMinutes });
+
+        if (selectedContactIds && selectedContactIds.length > 0) {
+            const bulkData = ContactHelper.prepareBulkTripContacts(trip.trip_id, selectedContactIds);
+            
+            for (const record of bulkData) {
+                await pool.query(
+                    'INSERT INTO trip_emergency_contacts (trip_id, contact_id) VALUES ($1, $2)',
+                    record
+                );
+            }
+        }
         return trip;
     }
 
