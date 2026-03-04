@@ -1,3 +1,7 @@
 node_modules
 .env
 shortcuts.txt
+test-trip-contacts.html
+test-trip-contacts.js
+test.html
+basic-test.js

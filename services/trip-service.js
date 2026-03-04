@@ -1,28 +1,33 @@
 import Trip from "../models/Trip.js";
+import TripEmergencyContact from "../models/TripEmergencyContact.js";
+import EmergencyContact from "../models/EmergencyContact.js";
 import AppError from '../utils/app-error.js';
 import pool from "../config/db-config.js";
-import ContactHelper from "../utils/contact-helper.js";
+
 
 export class TripService {
     async createTrip(tripData) {
-
-        const { selectedContactIds, ...restTripData } = tripData;
+        const { selectedContactIds, userId, ...restTripData } = tripData;
         
         const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
         const currentStatus = 'Active'; // Trip status would only be Active when first created
-        const trip = await Trip.create({ ...restTripData, currentStatus, maxExtensionMinutes });
+        const trip = await Trip.create({ ...restTripData, currentStatus, maxExtensionMinutes, user_id: userId });
 
-        if (selectedContactIds && selectedContactIds.length > 0) {
-            const bulkData = ContactHelper.prepareBulkTripContacts(trip.trip_id, selectedContactIds);
+        let linkedContacts = [];
+        if (selectedContactIds && Array.isArray(selectedContactIds) && selectedContactIds.length > 0) {
+            // Validate that all selected contacts belong to the user
+            const userContacts = await EmergencyContact.findByUserId(userId);
+            const userContactIds = userContacts.map(contact => contact.id);
             
-            for (const record of bulkData) {
-                await pool.query(
-                    'INSERT INTO trip_emergency_contacts (trip_id, contact_id) VALUES ($1, $2)',
-                    record
-                );
+            const invalidContacts = selectedContactIds.filter(id => !userContactIds.includes(id));
+            if (invalidContacts.length > 0) {
+                throw new AppError(`You can only select your own emergency contacts. Invalid IDs: ${invalidContacts.join(', ')}`, 403);
             }
+
+            linkedContacts = await TripEmergencyContact.bulkCreate(trip.trip_id, selectedContactIds);
         }
-        return trip;
+        
+        return { trip, linkedContacts };
     }
 
     async getTripById(id) {

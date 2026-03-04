@@ -138,6 +138,18 @@ class Trip {
     const result = await pool.query(sql, [userId]);
     return result.rows;
   }
+
+  
+static async linkEmergencyContacts(tripId, contactId) {
+    const query = `
+        INSERT INTO trip_emergency_contacts (trip_id, contact_id)
+        VALUES ($1, $2)
+        RETURNING *;
+    `;
+    const result = await pool.query(query, [tripId, contactId]);
+    return result.rows[0];
 }
+}
+
 
 export default Trip;
