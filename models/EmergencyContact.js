@@ -14,6 +14,37 @@ class EmergencyContact {
         const result = await pool.query(sql, values);
         return result.rows[0];
     }
+
+    static async findById(id) {
+        const sql = `SELECT * FROM emergency_contacts WHERE id = $1;`;
+        const result = await pool.query(sql, [id]);
+        return result.rows[0];
+    }
+
+    static async findByUserId(userId) {
+        const sql = `SELECT * FROM emergency_contacts WHERE user_id = $1;`;
+        const result = await pool.query(sql, [userId]);
+        return result.rows;
+    }
+
+    static async update(id, data) {
+        const { name, phone, email, relationship } = data;
+        const sql = `
+            UPDATE emergency_contacts 
+            SET name = $1, phone = $2, email = $3, relationship = $4, updated_at = NOW()
+            WHERE id = $5
+            RETURNING *;
+        `;
+        const values = [name, phone, email, relationship, id];
+        const result = await pool.query(sql, values);
+        return result.rows[0];
+    }
+
+    static async delete(id) {
+        const sql = `DELETE FROM emergency_contacts WHERE id = $1 RETURNING *;`;
+        const result = await pool.query(sql, [id]);
+        return result.rows[0];
+    }
 }
 
 export default EmergencyContact;

@@ -11,7 +11,7 @@ export class TripController {
             user_id: userId
         }
 
-        const trip = await tripService.createTrip(tripData);
+        const trip = await tripService.createTrip(req.body);
         ApiResponse.created(res, trip, 'Trip created successfully');
     });
 

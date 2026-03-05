@@ -3,6 +3,7 @@ import tripRoutes from './trip-routes.js';
 import userRoutes from './user-routes.js';
 import emergencyContactRoutes from './emergency-contact-routes.js';
 
+
 const router = express.Router();
 
 // Health check endpoint
@@ -18,6 +19,7 @@ router.get('/health', (req, res) => {
 router.use('/users', userRoutes);
 router.use('/trips', tripRoutes);
 router.use('/emergency-contacts', emergencyContactRoutes);
+
 
 
 export default router;
