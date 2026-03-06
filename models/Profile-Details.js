@@ -1,7 +1,7 @@
 import pool from "../config/db-config.js";
 
 class ProfileDetails {
-    static async upsert(userId, details) {
+    static async upsert(userId, details, db = pool) {
         const { date_of_birth, blood_type, medical_note } = details;
 
         const sql = `
@@ -17,7 +17,7 @@ class ProfileDetails {
         `;
 
         const values = [userId, date_of_birth, blood_type, medical_note];
-        const result = await pool.query(sql, values);
+        const result = await db.query(sql, values);
         return result.rows[0];
     }
 }
