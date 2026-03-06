@@ -36,7 +36,7 @@ class Trip {
     return result.rows[0];
   }
 
-  static async findById(id) {
+  static async findById(id, db = pool) {
     const query = `
       SELECT 
         trip_id,
@@ -54,12 +54,12 @@ class Trip {
       FROM trips WHERE trip_id = $1
     `;
 
-    const result = await pool.query(query, [id]);
+    const result = await db.query(query, [id]);
     return result.rows[0];
   }
 
   // later we would have to check the userId to in the query if the trip is owned by user or not
-  static async findAll({ status, limit, sortBy, offset }) {
+  static async findAll({ status, limit, sortBy, offset }, db = pool) {
     const query = `
       SELECT 
         trip_id,
@@ -84,11 +84,11 @@ class Trip {
       limit,
       offset
     ];
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     return result.rows;
   }
 
-  static async complete(id) {
+  static async complete(id, db = pool) {
     const query = `
       UPDATE trips 
       SET current_status = $1, actual_arrival_time = NOW(), updated_at = NOW() 
@@ -108,7 +108,7 @@ class Trip {
         user_id
     `;
     const values = ['Completed', id];
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
 
     if (result.rowCount === 0) {
       return null;
@@ -117,7 +117,7 @@ class Trip {
     return result.rows[0];
   }
 
-  static async findByUserId(userId) {
+  static async findByUserId(userId, db = pool) {
     const sql = `
       SELECT 
         trip_id,
@@ -135,18 +135,18 @@ class Trip {
       FROM trips WHERE user_id = $1
     `;
 
-    const result = await pool.query(sql, [userId]);
+    const result = await db.query(sql, [userId]);
     return result.rows;
   }
 
   
-static async linkEmergencyContacts(tripId, contactId) {
+static async linkEmergencyContacts(tripId, contactId, db = pool) {
     const query = `
         INSERT INTO trip_emergency_contacts (trip_id, contact_id)
         VALUES ($1, $2)
         RETURNING *;
     `;
-    const result = await pool.query(query, [tripId, contactId]);
+    const result = await db.query(query, [tripId, contactId]);
     return result.rows[0];
 }
 }

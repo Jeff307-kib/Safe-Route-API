@@ -2,7 +2,7 @@ import { query } from "express-validator";
 import pool from "../config/db-config.js";
 
 class User {
-  static async create(userData) {
+  static async create(userData, db = pool) {
     const { fullName, email, phoneNumber, password } = userData;
 
     const query = `
@@ -12,11 +12,11 @@ class User {
     `;
 
     const values = [fullName, email, phoneNumber, password];
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     return result.rows[0];
   }
 
-  static async findAll({ limit, sortBy, offset }) {
+  static async findAll({ limit, sortBy, offset }, db = pool) {
     const query = `
       SELECT user_id, full_name, email, phone_number, created_at
       FROM users 
@@ -29,11 +29,11 @@ class User {
       offset
     ];
 
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     return result.rows;
   }
 
-  static async findById(id) {
+  static async findById(id, db = pool) {
     const query = `
       SELECT 
         u.user_id, u.full_name, u.email, u.phone_number,
@@ -43,29 +43,29 @@ class User {
       WHERE u.user_id = $1
     `;
 
-    const result = await pool.query(query, [id]);
+    const result = await db.query(query, [id]);
     return result.rows[0];
   }
 
-  static async findByEmail(email) {
+  static async findByEmail(email, db = pool) {
     const query = `
       SELECT * FROM users WHERE email = $1;
     `;
 
-    const result = await pool.query(query, [email]);
+    const result = await db.query(query, [email]);
     return result.rows[0];
   }
 
-  static async findByPhoneNumber(phoneNumber) {
+  static async findByPhoneNumber(phoneNumber, db = pool) {
     const query = `
       SELECT user_id, full_name, email, phone_number, password_hash FROM users WHERE phone_number = $1;
     `;
 
-    const result = await pool.query(query, [phoneNumber]);
+    const result = await db.query(query, [phoneNumber]);
     return result.rows[0];
   }
 
-  static async updateUser(id, updateData) {
+  static async updateUser(id, updateData, db = pool) {
     const allowedFields = [
       "full_name",
       "email",
@@ -95,14 +95,14 @@ class User {
       RETURNING user_id, full_name, email, phone_number, created_at, updated_at;
     `;
 
-    const result = await pool.query(sql, values);
+    const result = await db.query(sql, values);
     console.log('HELLO FROM USER MODEL');
     return result.rows[0];
   }
 
-  static async deleteUser(id) {
+  static async deleteUser(id, db = pool) {
     const query = 'DELETE FROM users WHERE user_id = $1';
-    const result = await pool.query(query, [id]);
+    const result = await db.query(query, [id]);
     return result.rows[0];
   }
 }

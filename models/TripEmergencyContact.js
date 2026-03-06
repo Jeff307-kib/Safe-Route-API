@@ -34,30 +34,30 @@ class TripEmergencyContact {
         return result.rows;
     }
 
-    static async findByTripId(tripId) {
+    static async findByTripId(tripId, db = pool) {
         const query = `
             SELECT tec.*, ec.name, ec.phone, ec.email, ec.relationship
             FROM trip_emergency_contacts tec
             JOIN emergency_contacts ec ON tec.contact_id = ec.id
             WHERE tec.trip_id = $1
         `;
-        const result = await pool.query(query, [tripId]);
+        const result = await db.query(query, [tripId]);
         return result.rows;
     }
 
-    static async deleteByTripId(tripId) {
+    static async deleteByTripId(tripId, db = pool) {
         const query = `DELETE FROM trip_emergency_contacts WHERE trip_id = $1 RETURNING *;`;
-        const result = await pool.query(query, [tripId]);
+        const result = await db.query(query, [tripId]);
         return result.rows;
     }
 
-    static async delete(tripId, contactId) {
+    static async delete(tripId, contactId, db = pool) {
         const query = `
             DELETE FROM trip_emergency_contacts 
             WHERE trip_id = $1 AND contact_id = $2 
             RETURNING *;
         `;
-        const result = await pool.query(query, [tripId, contactId]);
+        const result = await db.query(query, [tripId, contactId]);
         return result.rows[0];
     }
 }
