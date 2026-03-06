@@ -22,6 +22,23 @@ export const tripValidators = {
             .isInt({ min: 5 })
             .withMessage('Duration must be at least 5 minutes'),
 
+        body('selectedContactIds')
+            .exists()
+            .withMessage('Contact must be selected to create a trip')
+            .bail()
+            .isArray()
+            .withMessage('Must be arrary')
+            .bail()
+            .isArray({ min: 1 })
+            .withMessage('At least one emergency contact must be selected')
+            .bail()
+            .custom((ids) => {
+                if (!ids.every(Number.isInteger)) {
+                    throw new Error('All contact IDs must be integers');
+                }
+                return true;
+            }),
+
         // body('currentStatus')
         //     .notEmpty()
         //     .withMessage('Status is required')
@@ -49,7 +66,7 @@ export const tripValidators = {
 
         query('limit')
             .optional()
-            .isInt({min: 1, max: 100})
+            .isInt({ min: 1, max: 100 })
             .withMessage('Limit must be between 1 and 100')
             .toInt(),
 
