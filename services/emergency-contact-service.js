@@ -5,7 +5,7 @@ class EmergencyContactService {
     async createContact(data) {
         const { userId, contactUserId, relationship } = data;
         const targetUser = await User.findById(contactUserId);
-        if (!targetUser) throw new Error("Target user not found");
+        if (!targetUser) throw new Error("Contact user not found");
 
         return await EmergencyContact.create({
             userId,
