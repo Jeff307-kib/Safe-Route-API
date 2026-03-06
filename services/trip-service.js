@@ -8,26 +8,43 @@ import pool from "../config/db-config.js";
 export class TripService {
     async createTrip(tripData) {
         const { selectedContactIds, userId, ...restTripData } = tripData;
-        
-        const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
-        const currentStatus = 'Active'; // Trip status would only be Active when first created
-        const trip = await Trip.create({ ...restTripData, currentStatus, maxExtensionMinutes, user_id: userId });
 
-        let linkedContacts = [];
-        if (selectedContactIds && Array.isArray(selectedContactIds) && selectedContactIds.length > 0) {
-            // Validate that all selected contacts belong to the user
-            const userContacts = await EmergencyContact.findByUserId(userId);
-            const userContactIds = userContacts.map(contact => contact.id);
-            
-            const invalidContacts = selectedContactIds.filter(id => !userContactIds.includes(id));
-            if (invalidContacts.length > 0) {
-                throw new AppError(`You can only select your own emergency contacts. Invalid IDs: ${invalidContacts.join(', ')}`, 403);
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
+            const currentStatus = 'Active'; // Trip status would only be Active when first created
+            const trip = await Trip.create({ ...restTripData, currentStatus, maxExtensionMinutes, user_id: userId }, client);
+
+            let linkedContacts = [];
+            if (selectedContactIds && Array.isArray(selectedContactIds) && selectedContactIds.length > 0) {
+                // Validate that all selected contacts belong to the user
+                const userContacts = await EmergencyContact.findByUserId(userId, client);
+
+                if (!userContacts || userContacts.length === 0) {
+                    throw new AppError('No contact found', 404);
+                }
+
+                const userContactIds = userContacts.map(contact => contact.id);
+
+                const invalidContacts = selectedContactIds.filter(id => !userContactIds.includes(id));
+                if (invalidContacts.length > 0) {
+                    throw new AppError(`You can only select your own emergency contacts. Invalid IDs: ${invalidContacts.join(', ')}`, 403);
+                }
+
+                linkedContacts = await TripEmergencyContact.bulkCreate(trip.trip_id, selectedContactIds, client);
             }
 
-            linkedContacts = await TripEmergencyContact.bulkCreate(trip.trip_id, selectedContactIds);
+            await client.query('COMMIT');
+            return { trip, linkedContacts };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
         }
-        
-        return { trip, linkedContacts };
     }
 
     async getTripById(id) {
@@ -49,7 +66,7 @@ export class TripService {
     async getUserTrips(userId) {
         const trips = await Trip.findByUserId(userId);
 
-        if(!trips || trips.length === 0) {
+        if (!trips || trips.length === 0) {
             return [];
         }
 

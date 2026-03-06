@@ -1,7 +1,7 @@
 import pool from "../config/db-config.js";
 
 class TripEmergencyContact {
-    static async bulkCreate(tripId, selectedContactIds) {
+    static async bulkCreate(tripId, selectedContactIds, db = pool) {
         if (!selectedContactIds || selectedContactIds.length === 0) {
             return [];
         }
@@ -12,7 +12,7 @@ class TripEmergencyContact {
             FROM emergency_contacts 
             WHERE id = ANY($1)
         `;
-        const validationResult = await pool.query(validationQuery, [selectedContactIds]);
+        const validationResult = await db.query(validationQuery, [selectedContactIds]);
         
         const existingContactIds = validationResult.rows.map(row => row.id);
         
@@ -30,7 +30,7 @@ class TripEmergencyContact {
         `;
 
         const values = [tripId, ...selectedContactIds];
-        const result = await pool.query(insertQuery, values);
+        const result = await db.query(insertQuery, values);
         return result.rows;
     }
 

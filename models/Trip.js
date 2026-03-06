@@ -1,7 +1,7 @@
 import pool from "../config/db-config.js";
 
 class Trip {
-  static async create(tripData) {
+  static async create(tripData, db = pool) {
     const {
       startLocation: { latitude: startLat, longitude: startLng },
       destinationLocation: { latitude: destLat, longitude: destLng },
@@ -32,7 +32,7 @@ class Trip {
       user_id
     ];
 
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     return result.rows[0];
   }
 

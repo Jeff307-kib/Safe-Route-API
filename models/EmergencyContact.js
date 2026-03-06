@@ -21,9 +21,9 @@ class EmergencyContact {
         return result.rows[0];
     }
 
-    static async findByUserId(userId) {
+    static async findByUserId(userId, db = pool) {
         const sql = `SELECT * FROM emergency_contacts WHERE user_id = $1;`;
-        const result = await pool.query(sql, [userId]);
+        const result = await db.query(sql, [userId]);
         return result.rows;
     }
 

@@ -8,10 +8,10 @@ export class TripController {
 
         const tripData = {
             ...req.body,
-            user_id: userId
+            userId
         }
 
-        const trip = await tripService.createTrip(req.body);
+        const trip = await tripService.createTrip(tripData);
         ApiResponse.created(res, trip, 'Trip created successfully');
     });
 
