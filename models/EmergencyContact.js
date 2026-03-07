@@ -2,15 +2,15 @@ import pool from "../config/db-config.js";
 
 class EmergencyContact {
     static async create(data, db = pool) {
-        const { userId, name, phone, email, relationship } = data;
+        const { userId, emergencyContactId, relationship, notes } = data;
 
         const sql = `
-            INSERT INTO emergency_contacts (user_id, name, phone, email, relationship)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO emergency_contacts (user_id, emergency_contact_id, relationship, notes)
+            VALUES ($1, $2, $3, $4)
             RETURNING *;
         `;
 
-        const values = [userId, name, phone, email, relationship];
+        const values = [userId, emergencyContactId, relationship, notes];
         const result = await db.query(sql, values);
         return result.rows[0];
     }
@@ -28,14 +28,14 @@ class EmergencyContact {
     }
 
     static async update(id, data, db = pool) {
-        const { name, phone, email, relationship } = data;
+        const { emergencyContactId, relationship, notes } = data;
         const sql = `
             UPDATE emergency_contacts 
-            SET name = $1, phone = $2, email = $3, relationship = $4, updated_at = NOW()
-            WHERE id = $5
+            SET emergency_contact_id = $1, relationship = $2, notes = $3, updated_at = NOW()
+            WHERE id = $4
             RETURNING *;
         `;
-        const values = [name, phone, email, relationship, id];
+        const values = [emergencyContactId, relationship, notes, id];
         const result = await db.query(sql, values);
         return result.rows[0];
     }

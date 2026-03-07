@@ -3,16 +3,16 @@ import User from "../models/User.js";
 
 class EmergencyContactService {
     async createContact(data) {
-        const { userId, contactUserId, relationship } = data;
+        const { userId, contactUserId, relationship, notes } = data;
+        
         const targetUser = await User.findById(contactUserId);
         if (!targetUser) throw new Error("Contact user not found");
 
         return await EmergencyContact.create({
             userId,
-            name: targetUser.full_name,
-            phone: targetUser.phone_number,
-            email: targetUser.email,
-            relationship
+            emergencyContactId: contactUserId,
+            relationship,
+            notes
         });
     }
 
