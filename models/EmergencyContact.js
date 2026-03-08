@@ -14,6 +14,16 @@ class EmergencyContact {
         const result = await db.query(sql, values);
         return result.rows[0];
     }
+    // Checking duplicates 
+static async exists(userId, contactUserId, client = pool) {
+    const query = `
+        SELECT 1 FROM emergency_contacts 
+        WHERE user_id = $1 AND contact_user_id = $2 
+        LIMIT 1
+    `;
+    const result = await client.query(query, [userId, contactUserId]);
+    return result.rows.length > 0;
+}
 
     static async findById(id, db = pool) {
         const sql = `SELECT * FROM emergency_contacts WHERE id = $1;`;
