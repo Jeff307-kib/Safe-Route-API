@@ -5,6 +5,11 @@ class EmergencyContactService {
     async createContact(data) {
         const { userId, contactUserId, relationship, notes } = data;
         
+        const alreadyExists = await EmergencyContact.exists(userId, contactUserId);
+            if (alreadyExists) {
+                throw new AppError('This user is already in your emergency contacts', 400);
+            }
+
         const targetUser = await User.findById(contactUserId);
         if (!targetUser) throw new Error("Contact user not found");
 

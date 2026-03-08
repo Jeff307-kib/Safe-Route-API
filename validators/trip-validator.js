@@ -36,6 +36,11 @@ export const tripValidators = {
                 if (!ids.every(Number.isInteger)) {
                     throw new Error('All contact IDs must be integers');
                 }
+
+                const uniqueIds = new Set(ids);
+                if (uniqueIds.size !== ids.length) {
+                     throw new Error('Duplicate emergency contacts are not allowed');
+                 }    
                 return true;
             }),
 
