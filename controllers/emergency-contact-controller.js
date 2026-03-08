@@ -9,6 +9,12 @@ export class EmergencyContactController {
         ApiResponse.created(res, contact, 'Contact added successfully');
     });
 
+    getMyContacts = catchAsync(async (req, res) => {
+        const userId = req.user.user_id; 
+        const contacts = await emergencyContactService.getContactsByUserId(userId);
+        ApiResponse.success(res, contacts, 'Your emergency contacts retrieved successfully');
+    });
+
     getById = catchAsync(async (req, res) => {
         const contact = await emergencyContactService.getContactById(req.params.id);
         ApiResponse.success(res, contact, 'Contact retrieved successfully');
