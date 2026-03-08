@@ -7,20 +7,33 @@ import pool from "../config/db-config.js";
 
 export class TripService {
     async createTrip(tripData) {
-        const { selectedContactIds, userId, ...restTripData } = tripData;
+        // 1. Destructure and remove duplicates from selectedContactIds
+        let { selectedContactIds, userId, ...restTripData } = tripData;
+
+        if (selectedContactIds && Array.isArray(selectedContactIds)) {
+            selectedContactIds = [...new Set(selectedContactIds)];
+        }
 
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
 
+            // 2. Original calculation and status logic
             const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
-            const currentStatus = 'Active'; // Trip status would only be Active when first created
-            const trip = await Trip.create({ ...restTripData, currentStatus, maxExtensionMinutes, user_id: userId }, client);
+            const currentStatus = 'Active'; 
+            
+            // 3. Create trip using preserved original model call
+            const trip = await Trip.create({ 
+                ...restTripData, 
+                currentStatus, 
+                maxExtensionMinutes, 
+                user_id: userId 
+            }, client);
 
-            let linkedContacts = [];
-            if (selectedContactIds && Array.isArray(selectedContactIds) && selectedContactIds.length > 0) {
-                // Validate that all selected contacts belong to the user
+            // 4. Link contacts only if unique list has items
+            if (selectedContactIds && selectedContactIds.length > 0) {
+                // Preserved validation logic
                 const userContacts = await EmergencyContact.findByUserId(userId, client);
 
                 if (!userContacts || userContacts.length === 0) {
@@ -31,14 +44,15 @@ export class TripService {
 
                 const invalidContacts = selectedContactIds.filter(id => !userContactIds.includes(id));
                 if (invalidContacts.length > 0) {
-                    throw new AppError(`You can only select your own emergency contacts. Invalid IDs: ${invalidContacts.join(', ')}`, 403);
+                    throw new AppError(`Invalid contact IDs: ${invalidContacts.join(', ')}`, 400);
                 }
 
-                linkedContacts = await TripEmergencyContact.bulkCreate(trip.trip_id, selectedContactIds, client);
+                // Call bulkCreate with the cleaned unique list
+                await TripEmergencyContact.bulkCreate(trip.trip_id, selectedContactIds, client);
             }
 
             await client.query('COMMIT');
-            return { trip, linkedContacts };
+            return trip;
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
