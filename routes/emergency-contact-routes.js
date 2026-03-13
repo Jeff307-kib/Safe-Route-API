@@ -7,8 +7,8 @@ import { protect } from '../middlewares/auth-middleware.js';
 const router = express.Router();
 
 router.post('/', protect, contactValidator.create, validate, controller.create);
+router.get('/my-contacts', protect, controller.getMyContacts); // Changed route
 router.get('/:id', protect, controller.getById);
-router.get('/user/:userId', protect, controller.getByUser);
 router.patch('/:id', protect, controller.update);
 router.delete('/:id', protect, controller.delete);
 

@@ -2,9 +2,16 @@ import { body } from "express-validator";
 
 const contactValidator = {
     create: [
+        //checking dulplicates
         body("contactUserId")
             .isInt()
-            .withMessage("contactUserId must be an integer"),
+            .withMessage("contactUserId must be an integer")
+            .custom((value, { req }) => {
+        if (value === req.user.id) {
+            throw new Error("You cannot add yourself as an emergency contact");
+        }
+        return true;
+    }),
         body("relationship")
             .isIn(['parent', 'friend', 'partner', 'colleague'])
             .withMessage("Invalid relationship type"),
