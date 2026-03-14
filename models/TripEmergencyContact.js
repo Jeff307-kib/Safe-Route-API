@@ -8,13 +8,13 @@ class TripEmergencyContact {
 
         // First validate that all contact IDs exist in emergency_contacts table
         const validationQuery = `
-            SELECT id 
+            SELECT emergency_contact_id 
             FROM emergency_contacts 
-            WHERE id = ANY($1)
+            WHERE emergency_contact_id = ANY($1)
         `;
         const validationResult = await db.query(validationQuery, [selectedContactIds]);
         
-        const existingContactIds = validationResult.rows.map(row => row.id);
+        const existingContactIds = validationResult.rows.map(row => row.emergency_contact_id);
         
         // Check if all provided contact IDs exist
         const missingContactIds = selectedContactIds.filter(id => !existingContactIds.includes(id));

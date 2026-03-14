@@ -2,6 +2,7 @@ import express from "express";
 import tripRoutes from './trip-routes.js';
 import userRoutes from './user-routes.js';
 import emergencyContactRoutes from './emergency-contact-routes.js';
+import notificationRoutes from './notification-routes.js';
 
 
 const router = express.Router();
@@ -19,6 +20,7 @@ router.get('/health', (req, res) => {
 router.use('/users', userRoutes);
 router.use('/trips', tripRoutes);
 router.use('/emergency-contacts', emergencyContactRoutes);
+router.use('/notifications', notificationRoutes);
 
 
 

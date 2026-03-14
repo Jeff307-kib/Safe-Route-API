@@ -3,6 +3,7 @@ import TripEmergencyContact from "../models/TripEmergencyContact.js";
 import EmergencyContact from "../models/EmergencyContact.js";
 import AppError from '../utils/app-error.js';
 import pool from "../config/db-config.js";
+import notificationService from "./notification-service.js";
 
 
 export class TripService {
@@ -21,26 +22,26 @@ export class TripService {
 
             // 2. Original calculation and status logic
             const maxExtensionMinutes = this.calculateMaxExtensionMinutes(tripData.durationMinutes);
-            const currentStatus = 'Active'; 
-            
+            const currentStatus = 'Active';
+
             // 3. Create trip using preserved original model call
-            const trip = await Trip.create({ 
-                ...restTripData, 
-                currentStatus, 
-                maxExtensionMinutes, 
-                user_id: userId 
+            const trip = await Trip.create({
+                ...restTripData,
+                currentStatus,
+                maxExtensionMinutes,
+                user_id: userId
             }, client);
 
             // 4. Link contacts only if unique list has items
             if (selectedContactIds && selectedContactIds.length > 0) {
                 // Preserved validation logic
-                const userContacts = await EmergencyContact.findByUserId(userId, client);
+                const userContacts = await EmergencyContact.findAllByUserId(userId, client);
 
                 if (!userContacts || userContacts.length === 0) {
                     throw new AppError('No contact found', 404);
                 }
 
-                const userContactIds = userContacts.map(contact => contact.id);
+                const userContactIds = userContacts.map(contact => contact.emergency_contact_id);
 
                 const invalidContacts = selectedContactIds.filter(id => !userContactIds.includes(id));
                 if (invalidContacts.length > 0) {
@@ -49,6 +50,15 @@ export class TripService {
 
                 // Call bulkCreate with the cleaned unique list
                 await TripEmergencyContact.bulkCreate(trip.trip_id, selectedContactIds, client);
+
+                await Promise.all(selectedContactIds.map(contactId =>
+                    notificationService.createNotification({
+                        recipientId: contactId,
+                        referenceId: trip.trip_id, 
+                        referenceType: 'TRIP_START',
+                        message: `Your contact has started a trip and selected you as an emergency contact.`
+                    }, client)
+                ));
             }
 
             await client.query('COMMIT');

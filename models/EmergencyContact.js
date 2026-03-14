@@ -81,6 +81,8 @@ class EmergencyContact {
     const sql = `
         SELECT 
             ec.id,
+            ec.user_id,
+            ec.emergency_contact_id,
             ec.relationship,
             ec.notes,
             ec.created_at,
