@@ -1,7 +1,11 @@
 import Notification from '../models/Notification.js';
-import AppError from '../utils/appError.js';
+import AppError from '../utils/app-error.js';
 
 class NotificationService {
+    async createNotification(data, db) {
+        return await Notification.create(data, db);
+    }
+
     async getUserNotifications(userId, { page = 1, limit = 20 }) {
         const offset = (page - 1) * limit;
         return await Notification.getAllByUser(userId, limit, offset);

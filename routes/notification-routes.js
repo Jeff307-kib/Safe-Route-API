@@ -1,6 +1,6 @@
 import express from 'express';
-import { notificationController } from '../controllers/notificationController.js';
-import { protect } from '../middlewares/authMiddleware.js';
+import { notificationController } from '../controllers/notification-controller.js';
+import { protect } from '../middlewares/auth-middleware.js';
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ router.patch('/:notificationId/read', notificationController.markAsRead);
 
 // Deletion
 router.delete('/delete-all', notificationController.clearAll);
-router.delete('/:notificationId', notificationController.deleteNotifications); // Single
+// router.delete('/:notificationId', notificationController.deleteNotifications); // Single
 router.delete('/', notificationController.deleteNotifications); // Bulk (ids in body)
 
 export default router;

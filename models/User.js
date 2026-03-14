@@ -96,7 +96,6 @@ class User {
     `;
 
     const result = await db.query(sql, values);
-    console.log('HELLO FROM USER MODEL');
     return result.rows[0];
   }
 

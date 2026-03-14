@@ -1,6 +1,6 @@
-import notificationService from '../services/notificationService.js';
-import catchAsync from '../utils/catchAsync.js';
-import ApiResponse from '../utils/apiResponse.js';
+import notificationService from '../services/notification-service.js';
+import catchAsync from '../utils/catch-async.js';
+import ApiResponse from '../utils/api-response.js';
 
 export const notificationController = {
     // 1. Get all notifications for the logged-in user
