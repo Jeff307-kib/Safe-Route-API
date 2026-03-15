@@ -1,37 +1,54 @@
 import EmergencyContact from "../models/EmergencyContact.js";
 import User from "../models/User.js";
+import pool from "../config/db-config.js";
+import notificationService from "./notification-service.js";
 
 class EmergencyContactService {
     async createContact(data) {
         const { userId, contactUserId, relationship, notes } = data;
 
-        // Check if the contact person exists in the users table first
-        const targetUser = await User.findById(contactUserId);
-        if (!targetUser) {
-            // Use your custom error handler if you have one
-            const error = new Error(`User with ID ${contactUserId} does not exist.`);
-            error.statusCode = 404;
-            throw error;
-        }
-
-        // Prevent users from adding themselves 
         if (userId === contactUserId) {
-            throw new Error("You cannot add yourself as an emergency contact.");
+            throw new AppError("You cannot add yourself as an emergency contact.", 400);
         }
 
-        // Check for duplicates
-        const alreadyExists = await EmergencyContact.exists(userId, contactUserId);
-        if (alreadyExists) {
-            throw new Error('This user is already in your emergency contacts');
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const [adder, targetUser] = await Promise.all([
+                User.findById(userId, client),
+                User.findById(contactUserId, client)
+            ]);
+
+            if (!targetUser) throw new AppError(`User with ID ${contactUserId} does not exist.`, 404);
+
+            const alreadyExists = await EmergencyContact.exists(userId, contactUserId, client);
+            if (alreadyExists) throw new AppError('This user is already in your emergency contacts', 400);
+
+            const newContact = await EmergencyContact.create({
+                userId,
+                emergencyContactId: contactUserId,
+                relationship,
+                notes
+            }, client);
+
+            await notificationService.createNotification({
+                recipientId: contactUserId,
+                referenceId: newContact.id, 
+                referenceType: 'EMERGENCY_CONTACT',
+                message: `${adder.full_name} has added you as their emergency contact (${relationship}).`
+            }, client);
+
+            await client.query('COMMIT');
+            return newContact;
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
         }
-
-        return await EmergencyContact.create({
-            userId,
-            emergencyContactId: contactUserId,
-            relationship,
-            notes
-        });
-
     }
 
     async getContactById(id) {
