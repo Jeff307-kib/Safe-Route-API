@@ -27,25 +27,49 @@ class EmergencyContact {
         return result.rows.length > 0;
     }
 
+    /**
+ * Get Single Partner Details
+ * Ensures the person requesting is either the requester or addressee
+ */
+    static async findContactById(id, myId, db = pool) {
+        const sql = `
+        SELECT 
+            ec.id,
+            ec.status,
+            ec.created_at,
+            CASE WHEN ec.requester_id = $2 THEN ec.requester_relationship ELSE ec.addressee_relationship END AS my_label_for_them,
+            CASE WHEN ec.requester_id = $2 THEN ec.requester_notes ELSE ec.addressee_notes END AS my_private_notes,
+
+            u.user_id AS contact_id,
+            u.full_name AS contact_name,
+            u.phone_number AS contact_phone,
+            u.email AS contact_email
+        FROM emergency_contacts ec
+        JOIN users u ON u.user_id = (
+            CASE WHEN ec.requester_id = $2 THEN ec.addressee_id ELSE ec.requester_id END
+        )
+        WHERE ec.id = $1 AND (ec.requester_id = $2 OR ec.addressee_id = $2);
+    `;
+        const result = await db.query(sql, [id, myId]);
+        return result.rows[0];
+    }
+
     static async findById(id, db = pool) {
         const sql = `SELECT * FROM emergency_contacts WHERE id = $1;`;
         const result = await db.query(sql, [id]);
         return result.rows[0];
     }
 
-    static async acceptRequest(id, data, db = pool) {
-        const { relationship, notes } = data;
+    static async acceptRequest(id, db = pool) {
         const sql = `
             UPDATE emergency_contacts 
             SET 
                 status = 'accepted', 
-                addressee_relationship = $1, 
-                addressee_notes = $2,
                 updated_at = NOW()
-            WHERE id = $3 
+            WHERE id = $1 
             RETURNING *;
         `;
-        const result = await db.query(sql, [relationship, notes, id]);
+        const result = await db.query(sql, [id]);
         return result.rows[0];
     }
 
@@ -88,7 +112,7 @@ class EmergencyContact {
         return result.rows;
     }
 
-    static async findPendingInvites(userId, db = pool) {
+    static async findPendingRequests(userId, db = pool) {
         const sql = `
             SELECT ec.*, u.full_name AS sender_name 
             FROM emergency_contacts ec
