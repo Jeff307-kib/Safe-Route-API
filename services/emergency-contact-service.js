@@ -26,8 +26,15 @@ class EmergencyContactService {
                 throw new AppError("The user you are trying to add does not exist", 404);
             }
 
-            const relationshipExists = await EmergencyContact.existsSymmetric(requesterId, addresseeId, client);
-            if (relationshipExists) {
+            // const relationshipExists = await EmergencyContact.existsSymmetric(requesterId, addresseeId, client);
+
+            // if (relationshipExists) {
+            //     throw new AppError("A request or relationship already exists between you and this user", 400);
+            // }
+
+            const isBlocked = await EmergencyContact.prepareForNewRequest(requesterId, addresseeId, client);
+
+            if (isBlocked) {
                 throw new AppError("A request or relationship already exists between you and this user", 400);
             }
 
@@ -71,7 +78,7 @@ class EmergencyContactService {
             if (!request) {
                 throw new AppError('Request not found', 404);
             }
-           
+
             if (request.addressee_id !== currentUserId) {
                 throw new AppError('You are not authorized to accept this request', 403)
             }
@@ -101,45 +108,39 @@ class EmergencyContactService {
         }
     }
 
-    async createContact(data) {
-        const { userId, contactUserId, relationship, notes } = data;
-
-        if (userId === contactUserId) {
-            throw new AppError("You cannot add yourself as an emergency contact.", 400);
-        }
-
+    async declineContactRequest(requestId, currentUserId) {
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
 
-            const [adder, targetUser] = await Promise.all([
-                User.findById(userId, client),
-                User.findById(contactUserId, client)
-            ]);
+            const request = await EmergencyContact.findById(requestId, client);
 
-            if (!targetUser) throw new AppError(`User with ID ${contactUserId} does not exist.`, 404);
+            if (!request) {
+                throw new AppError('Request not found', 404);
+            }
 
-            const alreadyExists = await EmergencyContact.exists(userId, contactUserId, client);
-            if (alreadyExists) throw new AppError('This user is already in your emergency contacts', 400);
+            if (request.addressee_id !== currentUserId) {
+                throw new AppError('You are not authorized to declined this request');
+            }
 
-            const newContact = await EmergencyContact.create({
-                userId,
-                emergencyContactId: contactUserId,
-                relationship,
-                notes
-            }, client);
+            if (request.status === 'accepted' || request.status === 'declined') {
+                throw new AppError('This contact has been accepted or declined');
+            }
+
+            const declinedRequest = await EmergencyContact.declineRequest(requestId, currentUserId, client);
+
+            const addressee = await User.findById(currentUserId, client);
 
             await notificationService.createNotification({
-                recipientId: contactUserId,
-                referenceId: newContact.id,
-                referenceType: 'EMERGENCY_CONTACT',
-                message: `${adder.full_name} has added you as their emergency contact (${relationship}).`
+                recipientId: request.requester_id,
+                referenceId: requestId,
+                referenceType: 'CONTACT_DECLINE',
+                message: `${addressee.full_name} declined your contact request.`
             }, client);
 
             await client.query('COMMIT');
-            return newContact;
-
+            return declinedRequest;
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
@@ -148,30 +149,60 @@ class EmergencyContactService {
         }
     }
 
-    async getContactById(id) {
-        const contact = await EmergencyContact.findById(id);
-        if (!contact) throw new Error("Contact not found");
+    async findContactById(id, userId) {
+        const contact = await EmergencyContact.findContactById(id, userId);
+
+        if (!contact) {
+            throw new AppError("Contact not found", 404);
+        }
+
         return contact;
     }
 
-    // async getContactsByUserId(userId) {
-    //     return await EmergencyContact.findByUserId(userId);
-    // }
+    async updateContactContext(id, userId, updateData) {
+        const { relationship, notes } = updateData;
+
+        // 1. Validation: Don't hit the DB if there is nothing to change
+        if (relationship === undefined && notes === undefined) {
+            throw new AppError('No update data provided (relationship or notes required).', 400);
+        }
+
+        // 2. Call the dynamic model method
+        const updatedContact = await EmergencyContact.updateMyDetails(
+            id,
+            userId,
+            { relationship, notes }
+        );
+
+        // 3. If null, it means the ID was wrong or the user isn't part of that row
+        if (!updatedContact) {
+            throw new AppError('Safety partner not found or unauthorized.', 404);
+        }
+
+        return updatedContact;
+    }
 
     async getContactsByUserId(userId) {
         return await EmergencyContact.findAllContacts(userId);
     }
 
-    async updateContact(id, data) {
-        const contact = await EmergencyContact.update(id, data);
-        if (!contact) throw new Error("Contact not found");
-        return contact;
-    }
+    async removeContacts(userId, { contactIds, deleteAll = false }) {
+        let deletedRecords;
 
-    async deleteContact(id) {
-        const contact = await EmergencyContact.delete(id);
-        if (!contact) throw new Error("Contact not found");
-        return contact;
+        if (deleteAll) {
+            deletedRecords = await EmergencyContact.deleteAllContacts(userId);
+        } else {
+            if (!Array.isArray(contactIds) || contactIds.length === 0) {
+                throw new AppError('Please provide an array of contact IDs to delete.', 400);
+            }
+            deletedRecords = await EmergencyContact.deleteSelectedContacts(contactIds, userId);
+        }
+
+        if (!deletedRecords || deletedRecords.length === 0) {
+            throw new AppError('No contacts were found to delete.', 404);
+        }
+
+        return deletedRecords;
     }
 }
 
