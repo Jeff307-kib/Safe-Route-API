@@ -6,10 +6,63 @@ import { protect } from '../middlewares/auth-middleware.js';
 
 const router = express.Router();
 
-router.post('/', protect, contactValidator.create, validate, controller.create);
-router.get('/my-contacts', protect, controller.getMyContacts); // Changed route
-router.get('/:id', protect, controller.getById);
-router.patch('/:id', protect, controller.update);
-router.delete('/:id', protect, controller.delete);
+router.use(protect);
+
+// router.post(
+//     '/',
+//     contactValidator.create,
+//     validate,
+//     controller.create
+// );
+router.post(
+    '/',
+    controller.sendRequest
+);
+
+router.get(
+    '/my-contacts',
+    controller.getMyContacts
+);
+
+router.get(
+    '/pending',
+    controller.getPendingRequests
+);
+
+router.patch(
+    '/:id/accept',
+    controller.acceptContactRequest
+);
+
+// router.get(
+//     '/:id'
+// )
+
+// router.patch(
+//     '/:id/decline'
+// );
+
+// router.patch(
+//     '/:id'
+// );
+
+// router.delete(
+//     '/:id'
+// );
+
+// router.get(
+//     '/:id', 
+//     controller.getById
+// );
+
+// router.patch(
+//     '/:id', 
+//     controller.update
+// );
+
+// router.delete(
+//     '/:id', 
+//     controller.delete
+// );
 
 export default router;
