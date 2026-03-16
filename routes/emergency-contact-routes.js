@@ -8,12 +8,6 @@ const router = express.Router();
 
 router.use(protect);
 
-// router.post(
-//     '/',
-//     contactValidator.create,
-//     validate,
-//     controller.create
-// );
 router.post(
     '/',
     controller.sendRequest
@@ -34,35 +28,24 @@ router.patch(
     controller.acceptContactRequest
 );
 
-// router.get(
-//     '/:id'
-// )
+router.patch(
+    '/:id/decline',
+    controller.declineContactRequest
+);
 
-// router.patch(
-//     '/:id/decline'
-// );
+router.get(
+    '/:id',
+    controller.getContactById
+)
 
-// router.patch(
-//     '/:id'
-// );
+router.patch(
+    '/:id',
+    controller.updateContactContext
+);
 
-// router.delete(
-//     '/:id'
-// );
-
-// router.get(
-//     '/:id', 
-//     controller.getById
-// );
-
-// router.patch(
-//     '/:id', 
-//     controller.update
-// );
-
-// router.delete(
-//     '/:id', 
-//     controller.delete
-// );
+router.delete(
+    '/',
+    controller.deleteContacts
+)
 
 export default router;

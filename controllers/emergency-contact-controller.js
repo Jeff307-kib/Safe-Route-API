@@ -1,6 +1,7 @@
 import emergencyContactService from "../services/emergency-contact-service.js";
 import catchAsync from "../utils/catch-async.js";
 import ApiResponse from "../utils/api-response.js";
+import AppError from "../utils/app-error.js";
 
 export class EmergencyContactController {
     sendRequest = catchAsync(async (req, res) => {
@@ -16,12 +17,6 @@ export class EmergencyContactController {
 
         ApiResponse.created(res, newRequest, 'Contact request sent successfully');
     })
-
-    // create = catchAsync(async (req, res) => {
-    //     const userId = req.user.user_id;
-    //     const contact = await emergencyContactService.createContact({ userId, ...req.body });
-    //     ApiResponse.created(res, contact, 'Contact added successfully');
-    // });
 
     getMyContacts = catchAsync(async (req, res) => {
         const userId = req.user.user_id;
@@ -42,31 +37,43 @@ export class EmergencyContactController {
         ApiResponse.success(res, acceptedRequest, 'Contact accepted successfully');
     })
 
-    getById = catchAsync(async (req, res) => {
-        const contact = await emergencyContactService.getContactById(req.params.id);
+    declineContactRequest = catchAsync(async (req, res) => {
+        const userId = req.user.user_id;
+        const requestId = req.params.id;
+        const declinedRequest = await emergencyContactService.declineContactRequest(requestId, userId);
+        ApiResponse.success(res, declinedRequest, 'Contact declined successfullt');
+    })
+
+    getContactById = catchAsync(async (req, res) => {
+        const userId = req.user.user_id;
+        const id = req.params.id;
+        const contact = await emergencyContactService.findContactById(id, userId);
         ApiResponse.success(res, contact, 'Contact retrieved successfully');
-    });
+    })
 
-    getByUser = catchAsync(async (req, res) => {
-        const contacts = await emergencyContactService.getContactsByUserId(req.params.userId);
-        ApiResponse.success(res, contacts, 'User contacts retrieved successfully');
-    });
+    updateContactContext = catchAsync(async (req, res, next) => {
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return next(new AppError('Request body is missing or empty. Please provide relationship or notes.', 400));
+        }
 
-    // getMyContacts = catchAsync(async (req, res) => {
-    //     const userId = req.user.user_id;
-    //     const contacts = await emergencyContactService.getContactsByUserId(userId);
-    //     ApiResponse.success(res, contacts, 'Your emergency contacts retrieved successfully');
-    // });
+        const userId = req.user.user_id;
+        const id = req.params.id;
+        const { relationship, notes } = req.body;
 
-    update = catchAsync(async (req, res) => {
-        const contact = await emergencyContactService.updateContact(req.params.id, req.body);
-        ApiResponse.success(res, contact, 'Contact updated successfully');
-    });
+        const updatedContact = await emergencyContactService.updateContactContext(id, userId, { relationship, notes });
+        ApiResponse.success(res, updatedContact, 'Contact updated successfully');
+    })
 
-    delete = catchAsync(async (req, res) => {
-        await emergencyContactService.deleteContact(req.params.id);
-        ApiResponse.noContent(res, 'Contact deleted successfully');
-    });
+    deleteContacts = catchAsync(async (req, res) => {
+        const userId = req.user.user_id;
+        const { contactIds, deleteAll } = req.body;
+
+        const deleted = await emergencyContactService.removeContacts(userId, {
+            contactIds,
+            deleteAll
+        });
+        ApiResponse.success(res, deleted, `${deleted.length} contact(s) deleted successfully`);
+    })
 }
 
 export default new EmergencyContactController();

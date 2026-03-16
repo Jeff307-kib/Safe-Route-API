@@ -21,17 +21,15 @@ class EmergencyContact {
             SELECT 1 FROM emergency_contacts 
             WHERE (requester_id = $1 AND addressee_id = $2) 
                OR (requester_id = $2 AND addressee_id = $1)
+            AND status IN ('pending', 'accepted')
             LIMIT 1;
         `;
         const result = await db.query(sql, [idA, idB]);
         return result.rows.length > 0;
     }
 
-    /**
- * Get Single Partner Details
- * Ensures the person requesting is either the requester or addressee
- */
-    static async findContactById(id, myId, db = pool) {
+    // Get Single Partner Details
+    static async findContactById(id, currentUserId, db = pool) {
         const sql = `
         SELECT 
             ec.id,
@@ -50,7 +48,7 @@ class EmergencyContact {
         )
         WHERE ec.id = $1 AND (ec.requester_id = $2 OR ec.addressee_id = $2);
     `;
-        const result = await db.query(sql, [id, myId]);
+        const result = await db.query(sql, [id, currentUserId]);
         return result.rows[0];
     }
 
@@ -73,10 +71,6 @@ class EmergencyContact {
         return result.rows[0];
     }
 
-    /**
- * Decline Request
- * Only the addressee can decline an incoming request.
- */
     static async declineRequest(id, addresseeId, db = pool) {
         const sql = `
         UPDATE emergency_contacts 
@@ -124,33 +118,88 @@ class EmergencyContact {
     }
 
     static async updateMyDetails(id, userId, updateData, db = pool) {
-        const { relationship, notes } = updateData;
+        const fields = [];
+        const values = [userId];
 
-        // We use a CASE inside the UPDATE to ensure Alice only updates requester_ columns
-        // and Bob only updates addressee_ columns.
+        const columnMap = {
+            relationship: ["requester_relationship", "addressee_relationship"],
+            notes: ["requester_notes", "addressee_notes"]
+        };
+
+        for (const [key, columns] of Object.entries(columnMap)) {
+            if (updateData[key] !== undefined) {
+                const [reqCol, addCol] = columns;
+                const placeholder = `$${values.length + 1}`;
+
+                fields.push(`
+                ${reqCol} = CASE WHEN requester_id = $1 THEN ${placeholder} ELSE ${reqCol} END,
+                ${addCol} = CASE WHEN addressee_id = $1 THEN ${placeholder} ELSE ${addCol} END
+            `);
+
+                values.push(updateData[key]);
+            }
+        }
+
+        if (fields.length === 0) return null;
+
+        fields.push("updated_at = NOW()");
+        values.push(id);
+
         const sql = `
-            UPDATE emergency_contacts
-            SET 
-                requester_relationship = CASE WHEN requester_id = $1 THEN $2 ELSE requester_relationship END,
-                requester_notes = CASE WHEN requester_id = $1 THEN $3 ELSE requester_notes END,
-                addressee_relationship = CASE WHEN addressee_id = $1 THEN $2 ELSE addressee_relationship END,
-                addressee_notes = CASE WHEN addressee_id = $1 THEN $3 ELSE addressee_notes END,
-                updated_at = NOW()
-            WHERE id = $4 AND (requester_id = $1 OR addressee_id = $1)
-            RETURNING *;
-        `;
-        const result = await db.query(sql, [userId, relationship, notes, id]);
+        UPDATE emergency_contacts
+        SET ${fields.join(", ")}
+        WHERE id = $${values.length} AND (requester_id = $1 OR addressee_id = $1)
+        RETURNING *;
+    `;
+
+        const result = await db.query(sql, values);
         return result.rows[0];
     }
 
-    static async delete(id, userId, db = pool) {
+    static async deleteSelectedContacts(ids, userId, db = pool) {
         const sql = `
             DELETE FROM emergency_contacts 
-            WHERE id = $1 AND (requester_id = $2 OR addressee_id = $2) 
+            WHERE id = ANY($1) 
+            AND (requester_id = $2 OR addressee_id = $2)
             RETURNING *;
         `;
-        const result = await db.query(sql, [id, userId]);
-        return result.rows[0];
+        const result = await db.query(sql, [ids, userId]);
+        return result.rows;
+    }
+
+    static async deleteAllContacts(userId, db = pool) {
+        const sql = `
+        DELETE FROM emergency_contacts 
+        WHERE requester_id = $1 OR addressee_id = $1
+        RETURNING *;
+    `;
+        const result = await db.query(sql, [userId]);
+        return result.rows;
+    }
+
+    static async prepareForNewRequest(requesterId, addresseeId, db = pool) {
+        const checkSql = `
+        SELECT id, status FROM emergency_contacts 
+        WHERE ((requester_id = $1 AND addressee_id = $2) 
+           OR (requester_id = $2 AND addressee_id = $1))
+        AND status IN ('pending', 'accepted')
+        LIMIT 1;
+    `;
+        const existing = await db.query(checkSql, [requesterId, addresseeId]);
+
+        if (existing.rows[0]) {
+            return true; 
+        }
+
+        const clearSql = `
+        DELETE FROM emergency_contacts 
+        WHERE ((requester_id = $1 AND addressee_id = $2) 
+           OR (requester_id = $2 AND addressee_id = $1))
+        AND status = 'declined';
+    `;
+        await db.query(clearSql, [requesterId, addresseeId]);
+
+        return false; 
     }
 }
 
