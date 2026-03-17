@@ -35,15 +35,21 @@ export class TripService {
             // 4. Link contacts only if unique list has items
             if (selectedContactIds && selectedContactIds.length > 0) {
                 // Preserved validation logic
-                const userContacts = await EmergencyContact.findAllByUserId(userId, client);
+                // const userContacts = await EmergencyContact.findAllContactIdsForUser(userId, client);
 
-                if (!userContacts || userContacts.length === 0) {
-                    throw new AppError('No contact found', 404);
+                // if (!userContacts || userContacts.length === 0) {
+                //     throw new AppError('No contact found', 404);
+                // }
+
+                const userContactIds = await EmergencyContact.findAllContactIdsForUser(userId, client);
+
+                if (!userContactIds || userContactIds.length === 0 ) {
+                    throw new AppError('You do not have any emergency contact', 404);
                 }
 
-                const userContactIds = userContacts.map(contact => contact.emergency_contact_id);
-
                 const invalidContacts = selectedContactIds.filter(id => !userContactIds.includes(id));
+                console.log(`User ID : ${userId}, Contacts : ${userContactIds}, Invalid Contacts : ${invalidContacts}`)
+
                 if (invalidContacts.length > 0) {
                     throw new AppError(`Invalid contact IDs: ${invalidContacts.join(', ')}`, 400);
                 }

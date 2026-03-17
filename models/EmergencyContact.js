@@ -106,6 +106,21 @@ class EmergencyContact {
         return result.rows;
     }
 
+    static async findAllContactIdsForUser(userId, db = pool) {
+        const sql = `
+            SELECT 
+                CASE 
+                    WHEN requester_id = $1 THEN addressee_id 
+                    ELSE requester_id 
+                END as contact_id
+            FROM emergency_contacts
+            WHERE (requester_id = $1 OR addressee_id = $1)
+            AND status = 'accepted'; 
+        `;
+        const result = await db.query(sql, [userId]);
+        return result.rows.map(row => row.contact_id);
+    }
+
     static async findPendingRequests(userId, db = pool) {
         const sql = `
             SELECT ec.*, u.full_name AS sender_name 
@@ -188,7 +203,7 @@ class EmergencyContact {
         const existing = await db.query(checkSql, [requesterId, addresseeId]);
 
         if (existing.rows[0]) {
-            return true; 
+            return true;
         }
 
         const clearSql = `
@@ -199,7 +214,7 @@ class EmergencyContact {
     `;
         await db.query(clearSql, [requesterId, addresseeId]);
 
-        return false; 
+        return false;
     }
 }
 
