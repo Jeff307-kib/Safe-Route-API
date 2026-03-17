@@ -7,20 +7,20 @@ class TripEmergencyContact {
         }
 
         // First validate that all contact IDs exist in emergency_contacts table
-        const validationQuery = `
-            SELECT emergency_contact_id 
-            FROM emergency_contacts 
-            WHERE emergency_contact_id = ANY($1)
-        `;
-        const validationResult = await db.query(validationQuery, [selectedContactIds]);
+        // const validationQuery = `
+        //     SELECT emergency_contact_id 
+        //     FROM emergency_contacts 
+        //     WHERE emergency_contact_id = ANY($1)
+        // `;
+        // const validationResult = await db.query(validationQuery, [selectedContactIds]);
         
-        const existingContactIds = validationResult.rows.map(row => row.emergency_contact_id);
+        // const existingContactIds = validationResult.rows.map(row => row.emergency_contact_id);
         
-        // Check if all provided contact IDs exist
-        const missingContactIds = selectedContactIds.filter(id => !existingContactIds.includes(id));
-        if (missingContactIds.length > 0) {
-            throw new Error(`The following emergency contact IDs do not exist: ${missingContactIds.join(', ')}`);
-        }
+        // // Check if all provided contact IDs exist
+        // const missingContactIds = selectedContactIds.filter(id => !existingContactIds.includes(id));
+        // if (missingContactIds.length > 0) {
+        //     throw new Error(`The following emergency contact IDs do not exist: ${missingContactIds.join(', ')}`);
+        // }
 
         // Insert all contacts for the trip
         const insertQuery = `
