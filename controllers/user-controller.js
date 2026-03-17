@@ -1,0 +1,47 @@
+import userService from "../services/user-service.js";
+import catchAsync from '../utils/catch-async.js';
+import ApiResponse from "../utils/api-response.js";
+
+export class UserController {
+    register = catchAsync(async (req, res) => {
+        const {user, token} = await userService.register(req.body);
+
+        ApiResponse.created(res, {user, token}, 'Register successful');
+    });
+
+    login = catchAsync(async (req, res) => {
+        const {user, token} = await userService.login(req.body);
+
+        ApiResponse.success(res, {user, token}, 'Login successful.')
+    })
+
+    getMe = catchAsync(async (req, res) => {
+        ApiResponse.success(res, { user: req.user}, 'User profile retrieved');
+    })
+
+    getAllUsers = catchAsync(async (req, res) => {
+        const { page, limit } = req.query;
+        const users = await userService.getAllUsers(page, limit);
+        const count = users.length;
+
+        ApiResponse.success(res, { total: count, users }, 'Users retrieved successfully');
+    });
+
+    update = catchAsync(async (req, res) => {
+        const updatedUser = await userService.updateUser(req.user.user_id, req.body);
+        ApiResponse.success(res, {user: updatedUser}, 'User updated successfully');
+    });
+
+    updateDetails = catchAsync(async (req, res) => {
+        const details = await userService.updateProfileDetails(req.user.user_id, req.body);
+        ApiResponse.success(res, details, 'Profile details updated successfully');
+    })
+
+    delete = catchAsync(async (req, res) => {
+        const { id } = req.params;
+        await userService.deleteUser(id);
+        ApiResponse.noContent(res, 'User deleted successfully');
+    });
+}
+
+export default new UserController();
