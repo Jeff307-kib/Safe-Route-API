@@ -48,6 +48,7 @@ class Trip {
         actual_arrival_time,
         current_status,
         total_extended_minutes,
+        snooze_count,
         created_at,
         updated_at,
         user_id
@@ -139,8 +140,8 @@ class Trip {
     return result.rows;
   }
 
-  
-static async linkEmergencyContacts(tripId, contactId, db = pool) {
+
+  static async linkEmergencyContacts(tripId, contactId, db = pool) {
     const query = `
         INSERT INTO trip_emergency_contacts (trip_id, contact_id)
         VALUES ($1, $2)
@@ -148,7 +149,29 @@ static async linkEmergencyContacts(tripId, contactId, db = pool) {
     `;
     const result = await db.query(query, [tripId, contactId]);
     return result.rows[0];
-}
+  }
+
+  static async updateStatus(tripId, status, db = pool) {
+    const query = `
+      UPDATE trips
+      SET current_status = $1, updated_at = NOW()
+      WHERE trip_id = $2
+      RETURNING *;
+    `;
+    const result = await db.query(query, [status, tripId]);
+    return result.rows[0];
+  }
+
+  static async incrementSnoozeCount(tripId, db = pool) {
+    const query = `
+      UPDATE trips
+      SET snooze_count = COALESCE(snooze_count, 0) + 1, updated_at = NOW()
+      WHERE trip_id = $1
+      RETURNING snooze_count;
+    `;
+    const result = await db.query(query, [tripId]);
+    return result.rows[0]?.snooze_count;
+  }
 }
 
 

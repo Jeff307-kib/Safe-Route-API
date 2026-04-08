@@ -1,0 +1,2 @@
+ALTER TABLE trips
+ADD COLUMN snooze_count INT DEFAULT 0;
